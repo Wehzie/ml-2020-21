@@ -1,3 +1,9 @@
+import pandas as pd
+
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import classification_report
+
+from fashion_mnist.utils import mnist_reader
 
 '''
 sciki-learn KNN-classifier applied to MNIST-fashion dataset.
@@ -7,32 +13,49 @@ sciki-learn KNN-documentation:
     https://scikit-learn.org/stable/modules/neighbors.html#classification
 '''
 
-# import data from OpenML on openml.org
-#from sklearn.datasets import fetch_openml
-#X_train, y_train = fetch_openml("Fashion-MNIST", return_X_y=True, as_frame=False)
+class Knn:
 
-from fashion_mnist.utils import mnist_reader
+    def __init__(self):
+        self.load_data()
+        self.results = pd.DataFrame(columns=['k', 'weight', 'accuracy'])
 
-# X holds data, y holds labels
-X_train, y_train = mnist_reader.load_mnist('fashion_mnist/data/fashion', kind='train')
-X_test, y_test = mnist_reader.load_mnist('fashion_mnist/data/fashion', kind='t10k')
+    def load_data(self):
+        # X holds data, y holds labels
+        self.X_train, self.y_train = mnist_reader.load_mnist('fashion_mnist/data/fashion', kind='train')
+        self.X_test, self.y_test = mnist_reader.load_mnist('fashion_mnist/data/fashion', kind='t10k')
 
-from sklearn.neighbors import KNeighborsClassifier
+    def train_classifier(self, k, weight):
+        self.classifier = KNeighborsClassifier(n_neighbors=k, weights=weight)
+        self.classifier.fit(self.X_train, self.y_train)
 
-classifier = KNeighborsClassifier(n_neighbors=3)
-classifier.fit(X_train, y_train)
+    def test_classifier(self, k, weight):
+        entry = {
+            'k': k,
+            'weight': weight,
+            'accuracy': self.classifier.score(self.X_test, self.y_test)
+        }
+        self.results = self.results.append(entry, ignore_index=True)
+        print(f"Accuracy: {entry['accuracy']}")
 
-# classify test data, return list of labels
-#classifier.predict(X_test)
+    def test_parameters(self):
+        ks = [1, 5]
+        weights = ['uniform', 'distance']
+        #algorithms = ['brute', 'kd_tree', 'ball_tree']
+        
+        for k in ks:
+            for weight in weights:
+                print(f"\nTesting k: {k}, weight: {weight}")
+                self.train_classifier(k, weight)
+                self.test_classifier(k, weight)
 
-# classify test data, for each test image return a list with the probability of belonging to each class
-#classifier.predict_proba(X_test)
+    def best_parameters(self):
+        print(self.results)
+        best_row = self.results['accuracy'].argmax()    
+        print(f"\nBest parameters:\n{self.results.loc[[best_row]]}")
 
-# classify test data, compare against test labels, return accuracy
-#print(classifier.score(X_test, y_test))
+def main():
+    knn = Knn()
+    knn.test_parameters()
+    knn.best_parameters()
 
-from sklearn.metrics import classification_report
-
-target_names = ["0 t-shirt", "1 trousers", "2 pullover", "3 dress", "4 coat", "5 sandal", "6 shirt", "7 sneaker", "8 bag", "9 boot"]
-
-print(classification_report(y_test, classifier.predict(X_test), target_names))
+main()

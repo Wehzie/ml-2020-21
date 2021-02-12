@@ -14,10 +14,10 @@ sciki-learn KNN-documentation:
 '''
 
 class Knn:
-'''
-Define methods to run KNN.
-Load data and store results.
-'''
+    '''
+    Define methods to run KNN.
+    Load data and store results.
+    '''
 
     def __init__(self):
         self.load_data()
@@ -46,9 +46,8 @@ Load data and store results.
 
     # train and test classifier using over a range of parameters
     def test_parameters(self):
-        ks = [1, 5]
+        ks = [1, 3, 5, 7]
         weights = ['uniform', 'distance']
-        #algorithms = ['brute', 'kd_tree', 'ball_tree']
         
         for k in ks:
             for weight in weights:
@@ -59,10 +58,19 @@ Load data and store results.
     # print all test results and highlight best parameters
     def best_parameters(self):
         print(self.results)
-        best_row = self.results['accuracy'].argmax()    
+        best_row = self.results['accuracy'].argmax()
         print(f"\nBest parameters:\n{self.results.loc[[best_row]]}")
+        
+        # do classification report with best parameters
+        print("\n Training again with best parameters to show full report.")
+        k = self.results.loc[[best_row]]['k'].iloc[0]
+        weight = self.results.loc[[best_row]]['weight'].iloc[0]
+        self.train_classifier(k, weight)
+        report = classification_report(self.y_test, self.classifier.predict(self.X_test))
+        print(report)
+        print(type(report))
 
-# intialize a KNN object and run its methods.
+# initialize a KNN object and run its methods.
 def main():
     knn = Knn()
     knn.test_parameters()
